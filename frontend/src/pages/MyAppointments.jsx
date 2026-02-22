@@ -144,7 +144,7 @@ const MyAppointments = () => {
   }
 
   /**
-   * Process Stripe payment for appointjjjjjjjjment
+   * Process Stripe payment for appointment
    * @param {string} appointmentId - ID of appointment to pay for
    */
   const appointmentStripe = async (appointmentId) => {
