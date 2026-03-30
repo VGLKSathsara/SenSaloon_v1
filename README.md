@@ -1,318 +1,114 @@
-Here's a comprehensive README.md file for your SenSaloon project:
-
-```markdown
 # 💇‍♀️ SenSaloon - Salon Booking Platform
 
-A full-stack salon booking platform with role-based access for customers, stylists, and administrators.
+<div align="center">
 
-## 🚀 Features
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![React](https://img.shields.io/badge/React-18-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-20-green.svg)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-brightgreen.svg)
+![PayHere](https://img.shields.io/badge/Payments-PayHere-orange.svg)
 
-- **User Features**
-  - Browse stylists by service type
-  - Book appointments with time slot selection
-  - View and manage appointments
-  - Pay via **PayHere** payment gateway
-  - Update profile with image upload
+**Complete Salon Management System with Real-Time Booking & PayHere Payment Integration**
 
-- **Stylist Features**
-  - View assigned appointments
-  - Mark appointments as completed/cancelled
-  - Update availability status
-  - View earnings dashboard
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Coming_Soon-2ea44f?style=for-the-badge)](https://github.com)
+[![Report Bug](https://img.shields.io/badge/Report_Bug-🐛-red?style=for-the-badge)](https://github.com)
+[![Request Feature](https://img.shields.io/badge/Request_Feature-✨-blue?style=for-the-badge)](https://github.com)
 
-- **Admin Features**
-  - Add/delete stylists
-  - Manage all appointments
-  - Toggle stylist availability
-  - View dashboard statistics
+</div>
 
-## 🛠️ Tech Stack
+---
 
-| Layer          | Technology                                |
-| -------------- | ----------------------------------------- |
-| Frontend       | React 18, Vite, TailwindCSS, React Router |
-| Backend        | Node.js, Express.js                       |
-| Database       | MongoDB (Mongoose)                        |
-| Authentication | JWT                                       |
-| File Upload    | Cloudinary                                |
-| Payments       | **PayHere** (Sri Lankan Payment Gateway)  |
+## 📸 **Dashboard Preview**
 
-## 📁 Project Structure
-```
+<div align="center">
+  <img src="https://via.placeholder.com/1200x600/5F6FFF/ffffff?text=SenSaloon+-+Salon+Booking+Platform" alt="Dashboard Screenshot" width="90%">
+  <br>
+  <em>Professional salon management with real-time booking and payment processing</em>
+</div>
 
-SenSaloon/
-├── frontend/ # Customer/User Frontend
-├── admin/ # Admin & Stylist Panel
-├── backend/ # Node.js API Server
-└── README.md
+---
 
-````
+## ✨ **Features**
 
-## 🔧 Installation
+### 🎯 **User Features**
 
-### Prerequisites
-- Node.js (v18+)
-- MongoDB Atlas account
-- Cloudinary account
-- PayHere merchant account
+| Feature                    | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| 👤 **User Registration**   | Sign up/Login with JWT authentication                    |
+| 💇 **Browse Stylists**     | Filter by service type (Haircut, Facial, Manicure, etc.) |
+| 📅 **Book Appointments**   | Real-time slot availability with 30-min intervals        |
+| 💳 **PayHere Payments**    | Secure Sri Lankan payment gateway integration            |
+| 📋 **Manage Appointments** | View, cancel, and track appointment history              |
+| 👤 **Profile Management**  | Update personal info and profile picture                 |
 
-### 1. Clone Repository
-```bash
-git clone https://github.com/yourusername/SenSaloon.git
-cd SenSaloon
-````
+### 👨‍⚕️ **Stylist Features**
 
-### 2. Backend Setup
+| Feature                    | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| 📊 **Dashboard**           | View earnings, appointments, and customer count |
+| 📋 **Appointment List**    | See all assigned appointments                   |
+| ✅ **Complete/Cancel**     | Mark appointments as completed or cancelled     |
+| 🔄 **Availability Toggle** | Set status as Available/Busy                    |
+| 👤 **Profile Update**      | Edit fees, address, and about section           |
 
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Update .env with your credentials
-npm run server
-```
+### 🔧 **Admin Features**
 
-### 3. Frontend Setup
+| Feature                     | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| 👥 **Stylist Management**   | Add new stylists, delete existing ones       |
+| 📊 **Dashboard**            | View stylists, appointments, customers count |
+| 📋 **All Appointments**     | Monitor and cancel any appointment           |
+| 🔄 **Availability Control** | Toggle stylist availability                  |
 
-```bash
-cd frontend
-npm install
-cp .env.example .env
-# Update VITE_BACKEND_URL
-npm run dev
-```
+---
 
-### 4. Admin Panel Setup
-
-```bash
-cd admin
-npm install
-cp .env.example .env
-# Update VITE_BACKEND_URL
-npm run dev
-```
-
-## ⚙️ Environment Variables
-
-### Backend (.env)
-
-```env
-# Server
-PORT=4000
-
-# JWT
-JWT_SECRET=your_jwt_secret
-
-# Admin Credentials
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=admin123
-
-# MongoDB
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/sensaloon
-
-# Cloudinary
-CLOUDINARY_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# PayHere Payment Gateway
-PAYHERE_MERCHANT_ID=your_merchant_id
-PAYHERE_SECRET=your_merchant_secret
-PAYHERE_APP_ID=your_app_id
-PAYHERE_CURRENCY=LKR
-PAYHERE_SANDBOX=true
-FRONTEND_URL=http://localhost:5173
-BACKEND_URL=http://localhost:4000
-```
-
-### Frontend (.env)
-
-```env
-VITE_BACKEND_URL=http://localhost:4000
-VITE_CURRENCY=Rs.
-```
-
-### Admin Panel (.env)
-
-```env
-VITE_BACKEND_URL=http://localhost:4000
-VITE_CURRENCY=Rs.
-```
-
-## 🚦 API Endpoints
-
-### User Routes
-
-| Method | Endpoint                       | Description              |
-| ------ | ------------------------------ | ------------------------ |
-| POST   | `/api/user/register`           | User registration        |
-| POST   | `/api/user/login`              | User login               |
-| GET    | `/api/user/get-profile`        | Get user profile         |
-| POST   | `/api/user/update-profile`     | Update profile           |
-| POST   | `/api/user/book-appointment`   | Book appointment         |
-| GET    | `/api/user/appointments`       | List appointments        |
-| POST   | `/api/user/cancel-appointment` | Cancel appointment       |
-| POST   | `/api/user/payment-payhere`    | Initiate PayHere payment |
-| GET    | `/api/user/verify-payhere`     | Verify payment           |
-| POST   | `/api/user/payhere-notify`     | PayHere webhook          |
-
-### Admin Routes
-
-| Method | Endpoint                        | Description        |
-| ------ | ------------------------------- | ------------------ |
-| POST   | `/api/admin/login`              | Admin login        |
-| GET    | `/api/admin/all-stylists`       | Get all stylists   |
-| POST   | `/api/admin/add-stylist`        | Add new stylist    |
-| POST   | `/api/admin/delete-stylist`     | Delete stylist     |
-| GET    | `/api/admin/appointments`       | All appointments   |
-| POST   | `/api/admin/cancel-appointment` | Cancel appointment |
-| GET    | `/api/admin/dashboard`          | Dashboard stats    |
-
-### Stylist Routes
-
-| Method | Endpoint                            | Description          |
-| ------ | ----------------------------------- | -------------------- |
-| POST   | `/api/stylist/login`                | Stylist login        |
-| GET    | `/api/stylist/appointments`         | Stylist appointments |
-| POST   | `/api/stylist/complete-appointment` | Complete appointment |
-| POST   | `/api/stylist/cancel-appointment`   | Cancel appointment   |
-| GET    | `/api/stylist/profile`              | Get profile          |
-| POST   | `/api/stylist/update-profile`       | Update profile       |
-| GET    | `/api/stylist/dashboard`            | Dashboard stats      |
-
-## 💳 PayHere Integration
+## 💳 **PayHere Payment Integration**
 
 ### Payment Flow
 
-1. User clicks "Pay Now" → Backend creates order
-2. Redirect to PayHere hosted payment page
-3. User enters card details on PayHere (secure)
-4. PayHere processes payment and redirects back
-5. Webhook confirms payment status
+| Step | Description                                  |
+| ---- | -------------------------------------------- |
+| 1️⃣   | User clicks "Pay Now" on appointment         |
+| 2️⃣   | Backend creates PayHere order with signature |
+| 3️⃣   | Redirect to PayHere secure payment page      |
+| 4️⃣   | User enters card details on PayHere          |
+| 5️⃣   | PayHere processes payment                    |
+| 6️⃣   | Redirect back to app with confirmation       |
 
 ### Test Cards (Sandbox Mode)
 
-| Card Type  | Card Number         | Expiry     | CVV          |
-| ---------- | ------------------- | ---------- | ------------ |
-| Visa       | 4916 1100 0000 0000 | Any future | Any 3 digits |
-| Mastercard | 5213 0000 0000 0000 | Any future | Any 3 digits |
-
-### PayHere Callback URLs
-
-- Success: `{FRONTEND_URL}/verify?status=success&appointmentId={id}`
-- Cancel: `{FRONTEND_URL}/verify?status=cancel`
-- Notification: `{BACKEND_URL}/api/user/payhere-notify`
-
-## 🧪 Testing
-
-### Test Backend
-
-```bash
-# Test Cloudinary
-GET http://localhost:4000/test-cloudinary
-
-# Test PayHere Config
-GET http://localhost:4000/test-payhere
-
-# Test MongoDB
-Check console for "Database Connected" message
-```
-
-### Test Payment Flow
-
-1. Login as user
-2. Book appointment
-3. Go to "My Appointments"
-4. Click "Pay Now"
-5. Use test card on PayHere sandbox
-6. Verify successful payment
-
-## 🔐 Authentication
-
-- **Users**: JWT token stored in localStorage
-- **Stylists**: Separate JWT token (`sToken`)
-- **Admin**: Separate JWT token (`aToken`)
-
-## 📦 Deployment
-
-### Deploy Backend (Vercel)
-
-```bash
-cd backend
-npm install
-vercel --prod
-```
-
-### Deploy Frontend (Vercel/Netlify)
-
-```bash
-cd frontend
-npm run build
-# Deploy dist folder
-```
-
-## ⚠️ Common Issues & Solutions
-
-| Issue                    | Solution                                           |
-| ------------------------ | -------------------------------------------------- |
-| MongoDB connection error | Check MONGODB_URI, whitelist IP in Atlas           |
-| Cloudinary upload fails  | Verify API credentials, check folder permissions   |
-| PayHere redirect fails   | Ensure FRONTEND_URL is correct, check sandbox mode |
-| JWT token invalid        | Check JWT_SECRET matches across deployments        |
-| CORS errors              | Verify VITE_BACKEND_URL, check CORS settings       |
-
-## 📝 API Response Format
-
-All endpoints return JSON with this structure:
-
-```json
-{
-  "success": boolean,
-  "message": string,
-  "data": object (optional)
-}
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
-
-## 📄 License
-
-MIT License - feel free to use this project for learning or commercial purposes.
-
-## 👨‍💻 Author
-
-Your Name - [@yourusername](https://github.com/yourusername)
+| Card Type     | Card Number           | Expiry     | CVV          |
+| ------------- | --------------------- | ---------- | ------------ |
+| 💳 Visa       | `4916 1100 0000 0000` | Any future | Any 3 digits |
+| 💳 Mastercard | `5213 0000 0000 0000` | Any future | Any 3 digits |
 
 ---
 
-## 🆘 Support
+## 🛠️ **Tech Stack**
 
-- PayHere Support: [https://support.payhere.lk](https://support.payhere.lk)
-- Cloudinary Docs: [https://cloudinary.com/documentation](https://cloudinary.com/documentation)
-- MongoDB Docs: [https://docs.mongodb.com](https://docs.mongodb.com)
+<div align="center">
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
+![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)
+
+</div>
+
+| Layer       | Technology                                |
+| ----------- | ----------------------------------------- |
+| Frontend    | React 18, Vite, TailwindCSS, React Router |
+| Backend     | Node.js, Express.js                       |
+| Database    | MongoDB (Mongoose ODM)                    |
+| Auth        | JWT (JSON Web Tokens)                     |
+| File Upload | Cloudinary                                |
+| Payments    | **PayHere** (Sri Lanka)                   |
 
 ---
 
-**Made with ❤️ for Sri Lankan Salons**
-
-```
-
-This README includes:
-- ✅ Complete project overview
-- ✅ Installation instructions
-- ✅ All environment variables with examples
-- ✅ API endpoints table
-- ✅ PayHere integration details
-- ✅ Test card information
-- ✅ Common issues and solutions
-- ✅ Deployment guide
-- ✅ Response format documentation
-
-You can customize the author section and add any specific details about your deployment URLs after hosting.
-```
+## 📁 **Project Structure**
