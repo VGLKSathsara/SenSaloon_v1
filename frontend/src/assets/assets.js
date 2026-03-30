@@ -20,7 +20,7 @@ import Manicure from './Manicure.svg'
 import Hair_Color from './Hair_Color.svg'
 import Bridal_Makeup from './Bridal_Makeup.svg'
 import Hair_Spa from './Hair_Spa.svg'
-import payhere_logo from './payhere-logo.png.png'
+import payhere_logo from './payhere-logo.png'
 
 export const assets = {
   appointment_img,

@@ -12,6 +12,8 @@ dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
 // app config
 const app = express()
 const port = process.env.PORT || 4000
+
+// Connect to MongoDB and Cloudinary
 connectDB()
 connectCloudinary()
 
@@ -129,31 +131,51 @@ app.get('/', (req, res) => {
         li { margin: 10px 0; }
         a { color: #5F6FFF; text-decoration: none; }
         a:hover { text-decoration: underline; }
+        .badge { display: inline-block; background: #5F6FFF; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
       </style>
     </head>
     <body>
       <div class="container">
-        <h1>🌟 Sensaloon API Working</h1>
+        <h1>🌟 Sensaloon API Server</h1>
         <div class="status">
           <p>✅ Server Status: <strong class="success">Running</strong></p>
           <p>📅 Date: ${new Date().toLocaleString()}</p>
-          <p>💳 Payment Gateway: <strong>PayHere</strong> (Sandbox: ${process.env.PAYHERE_SANDBOX === 'true' ? 'Yes' : 'No'})</p>
+          <p>💳 Payment Gateway: <strong>PayHere</strong> <span class="badge">${process.env.PAYHERE_SANDBOX === 'true' ? 'Sandbox Mode' : 'Live Mode'}</span></p>
+          <p>🔧 MongoDB: ${process.env.MONGODB_URI ? 'Configured' : 'Not Configured'}</p>
+          <p>☁️ Cloudinary: ${process.env.CLOUDINARY_NAME ? 'Configured' : 'Not Configured'}</p>
         </div>
-        <h2>Available Routes:</h2>
+        <h2>📡 Available Endpoints:</h2>
         <ul>
           <li>📸 <a href="/test-cloudinary">/test-cloudinary</a> - Test Cloudinary Connection</li>
           <li>💳 <a href="/test-payhere">/test-payhere</a> - Test PayHere Configuration</li>
-          <li>👨‍⚕️ <a href="/api/admin/all-stylists">/api/admin/all-stylists</a> - Get All Stylists (Admin Token Required)</li>
-          <li>🗑️ POST /api/admin/delete-stylist - Delete Stylist (Admin Token Required)</li>
-          <li>💵 POST /api/user/payment-payhere - Initiate PayHere Payment (User Token Required)</li>
+          <li>👨‍⚕️ <a href="/api/stylist/list">/api/stylist/list</a> - Get All Stylists (Public)</li>
+          <li>🔐 POST /api/admin/login - Admin Login</li>
+          <li>🔐 POST /api/stylist/login - Stylist Login</li>
+          <li>🔐 POST /api/user/login - User Login</li>
+          <li>📝 POST /api/user/register - User Registration</li>
+          <li>💵 POST /api/user/payment-payhere - Initiate PayHere Payment</li>
           <li>✅ GET /api/user/verify-payhere - Verify PayHere Payment</li>
-          <li>🔔 POST /api/user/payhere-notify - PayHere Notification Webhook (Public)</li>
+          <li>🔔 POST /api/user/payhere-notify - PayHere Webhook</li>
         </ul>
-        <p><strong>Note:</strong> Make sure your frontend is running on ${process.env.FRONTEND_URL || 'http://localhost:5173'}</p>
+        <p><strong>📱 Frontend URL:</strong> ${process.env.FRONTEND_URL || 'http://localhost:5173'}</p>
+        <hr>
+        <p><em>Sensaloon API - Professional Salon Booking Platform</em></p>
       </div>
     </body>
     </html>
   `)
+})
+
+// ============================================
+// ERROR HANDLING MIDDLEWARE
+// ============================================
+app.use((err, req, res, next) => {
+  console.error('Error:', err)
+  res.status(500).json({
+    success: false,
+    message: 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+  })
 })
 
 // ============================================
