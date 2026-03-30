@@ -1,3 +1,4 @@
+// Import all images
 import appointment_img from './appointment_img.png'
 import header_img from './header_img.png'
 import group_profiles from './group_profiles.png'
@@ -7,20 +8,29 @@ import logo from './logo.svg'
 import dropdown_icon from './dropdown_icon.svg'
 import menu_icon from './menu_icon.svg'
 import cross_icon from './cross_icon.png'
-import chats_icon from './chats_icon.svg'
+import chats_icon from './chat_icon.svg'
 import verified_icon from './verified_icon.svg'
 import arrow_icon from './arrow_icon.svg'
 import info_icon from './info_icon.svg'
 import upload_icon from './upload_icon.png'
 import stripe_logo from './stripe_logo.png'
 import razorpay_logo from './razorpay_logo.png'
-import Hair_Cut from './Hair_Cut.svg'
-import Facial from './Facial.svg'
+import upload_area from './upload_area.png'
+import avatar_icon from './avatar_icon.png'
+
+// Import service icons
+import Hair_Cut from './Hair_Curl.svg'
+import Facial from './Facial_svg'
 import Manicure from './Manicure.svg'
 import Hair_Color from './Hair_Color.svg'
-import Bridal_Makeup from './Bridal_Makeup.svg'
+import Bridal_Makeup from './Briald_Makeup.svg'
 import Hair_Spa from './Hair_Spa.svg'
 
+// PayHere logo - you have the file payhere-logo.png.png (note the double .png)
+// Rename your file to payhere-logo.png or use the current name
+import payhere_logo from './payhere-logo.png.png'
+
+// Export all assets as an object
 export const assets = {
   appointment_img,
   header_img,
@@ -36,10 +46,14 @@ export const assets = {
   cross_icon,
   dropdown_icon,
   upload_icon,
+  upload_area,
   stripe_logo,
   razorpay_logo,
+  avatar_icon,
+  payhere_logo,
 }
 
+// Export service data for the speciality menu
 export const serviceData = [
   {
     service: 'Haircut',
@@ -66,3 +80,6 @@ export const serviceData = [
     image: Hair_Spa,
   },
 ]
+
+// Export payhere_logo separately if needed
+export { payhere_logo }

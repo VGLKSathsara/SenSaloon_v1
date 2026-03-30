@@ -12,6 +12,7 @@ const appointmentSchema = new mongoose.Schema({
   cancelled: { type: Boolean, default: false },
   payment: { type: Boolean, default: false },
   isCompleted: { type: Boolean, default: false },
+  payhere_order_id: { type: String, default: '' }, // Added for PayHere reference
 })
 
 const appointmentModel =

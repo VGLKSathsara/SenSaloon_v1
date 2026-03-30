@@ -5,15 +5,30 @@ import userModel from '../models/userModel.js'
 import stylistModel from '../models/stylistModel.js'
 import appointmentModel from '../models/appointmentModel.js'
 import { v2 as cloudinary } from 'cloudinary'
-import stripe from 'stripe'
-import razorpay from 'razorpay'
+import crypto from 'crypto'
 
-// Initialize Payment Gateways
-const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
-const razorpayInstance = new razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-})
+// PayHere Configuration
+const PAYHERE_MERCHANT_ID = process.env.PAYHERE_MERCHANT_ID
+const PAYHERE_SECRET = process.env.PAYHERE_SECRET
+const PAYHERE_CURRENCY = process.env.PAYHERE_CURRENCY || 'LKR'
+const PAYHERE_SANDBOX = process.env.PAYHERE_SANDBOX === 'true'
+
+// PayHere API endpoints
+const PAYHERE_CHECKOUT_URL = PAYHERE_SANDBOX
+  ? 'https://sandbox.payhere.lk/pay/checkout'
+  : 'https://www.payhere.lk/pay/checkout'
+
+/**
+ * Generate MD5 signature for PayHere payment
+ * @param {Object} paymentData - Payment details
+ * @returns {string} MD5 hash signature
+ */
+const generatePayHereSignature = (paymentData) => {
+  const { merchant_id, order_id, amount, currency, merchant_secret } =
+    paymentData
+  const hashString = `${merchant_id}${order_id}${amount}${currency}${merchant_secret}`
+  return crypto.createHash('md5').update(hashString).digest('hex').toUpperCase()
+}
 
 /**
  * Register new user
@@ -292,63 +307,10 @@ const listAppointment = async (req, res) => {
 }
 
 /**
- * Razorpay Payment Initiation
- * Creates Razorpay order for appointment payment
+ * PayHere Payment Initiation
+ * Creates payment session and redirects to PayHere hosted page
  */
-const paymentRazorpay = async (req, res) => {
-  try {
-    const { appointmentId } = req.body
-    const appointmentData = await appointmentModel.findById(appointmentId)
-
-    if (!appointmentData || appointmentData.cancelled) {
-      return res.json({
-        success: false,
-        message: 'Appointment Cancelled or not found',
-      })
-    }
-
-    const options = {
-      amount: appointmentData.amount * 100,
-      currency: process.env.CURRENCY,
-      receipt: appointmentId,
-    }
-
-    const order = await razorpayInstance.orders.create(options)
-    res.json({ success: true, order })
-  } catch (error) {
-    console.log(error)
-    res.json({ success: false, message: error.message })
-  }
-}
-
-/**
- * Verify Razorpay Payment
- * Confirms payment status and updates appointment
- */
-const verifyRazorpay = async (req, res) => {
-  try {
-    const { razorpay_order_id } = req.body
-    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id)
-
-    if (orderInfo.status === 'paid') {
-      await appointmentModel.findByIdAndUpdate(orderInfo.receipt, {
-        payment: true,
-      })
-      res.json({ success: true, message: 'Payment Successful' })
-    } else {
-      res.json({ success: false, message: 'Payment Failed' })
-    }
-  } catch (error) {
-    console.log(error)
-    res.json({ success: false, message: error.message })
-  }
-}
-
-/**
- * Stripe Payment Initiation
- * Creates Stripe checkout session for appointment payment
- */
-const paymentStripe = async (req, res) => {
+const paymentPayHere = async (req, res) => {
   try {
     const { appointmentId } = req.body
     const { origin } = req.headers
@@ -362,29 +324,29 @@ const paymentStripe = async (req, res) => {
       })
     }
 
-    const currency = process.env.CURRENCY.toLowerCase()
+    // Generate unique order ID
+    const orderId = `ORDER_${appointmentId}_${Date.now()}`
 
-    const line_items = [
-      {
-        price_data: {
-          currency,
-          product_data: {
-            name: 'Appointment Fees',
-          },
-          unit_amount: appointmentData.amount * 100,
-        },
-        quantity: 1,
-      },
-    ]
+    // Prepare payment data for signature
+    const paymentData = {
+      merchant_id: PAYHERE_MERCHANT_ID,
+      order_id: orderId,
+      amount: appointmentData.amount.toString(),
+      currency: PAYHERE_CURRENCY,
+      merchant_secret: PAYHERE_SECRET,
+    }
 
-    const session = await stripeInstance.checkout.sessions.create({
-      success_url: `${origin}/verify?success=true&appointmentId=${appointmentData._id}`,
-      cancel_url: `${origin}/verify?success=false&appointmentId=${appointmentData._id}`,
-      line_items: line_items,
-      mode: 'payment',
+    const signature = generatePayHereSignature(paymentData)
+
+    // Store order_id in appointment for later reference
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
+      payhere_order_id: orderId,
     })
 
-    res.json({ success: true, session_url: session.url })
+    // Build PayHere payment URL with parameters
+    const paymentUrl = `${PAYHERE_CHECKOUT_URL}?merchant_id=${PAYHERE_MERCHANT_ID}&order_id=${orderId}&amount=${appointmentData.amount}&currency=${PAYHERE_CURRENCY}&return_url=${origin}/verify?status=success&appointmentId=${appointmentId}&cancel_url=${origin}/verify?status=cancel&notify_url=${process.env.BACKEND_URL}/api/user/payhere-notify&signature=${signature}&item_name=Salon%20Appointment&item_id=${appointmentId}`
+
+    res.json({ success: true, payment_url: paymentUrl })
   } catch (error) {
     console.log(error)
     res.json({ success: false, message: error.message })
@@ -392,22 +354,95 @@ const paymentStripe = async (req, res) => {
 }
 
 /**
- * Verify Stripe Payment
- * Updates appointment payment status after successful payment
+ * Verify PayHere Payment
+ * Handles return from PayHere payment page
  */
-const verifyStripe = async (req, res) => {
+const verifyPayHere = async (req, res) => {
   try {
-    const { appointmentId, success } = req.body
+    const { appointmentId, status } = req.query
 
-    if (success === 'true') {
-      await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true })
-      return res.json({ success: true, message: 'Payment Successful' })
+    if (status === 'cancel') {
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/my-appointments?payment=cancelled`,
+      )
     }
 
-    res.json({ success: false, message: 'Payment Failed' })
+    if (status === 'success' && appointmentId) {
+      await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true })
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/my-appointments?payment=success`,
+      )
+    }
+
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/my-appointments?payment=failed`,
+    )
   } catch (error) {
     console.log(error)
-    res.json({ success: false, message: error.message })
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/my-appointments?payment=failed`,
+    )
+  }
+}
+
+/**
+ * PayHere Notification Endpoint
+ * Receives payment status updates from PayHere (server-to-server)
+ */
+const payHereNotification = async (req, res) => {
+  try {
+    // PayHere sends POST data to this endpoint
+    const {
+      merchant_id,
+      order_id,
+      payment_id,
+      payhere_amount,
+      payhere_currency,
+      status_code,
+      md5sig,
+    } = req.body
+
+    console.log('PayHere Notification Received:', { order_id, status_code })
+
+    // Verify signature
+    const verificationData = {
+      merchant_id: merchant_id,
+      order_id: order_id,
+      amount: payhere_amount,
+      currency: payhere_currency,
+      status_code: status_code,
+      merchant_secret: PAYHERE_SECRET,
+    }
+
+    const expectedHash = generatePayHereSignature(verificationData)
+
+    if (md5sig !== expectedHash) {
+      console.log('Invalid signature')
+      return res.status(400).send('Invalid signature')
+    }
+
+    // Find appointment by order_id
+    const appointment = await appointmentModel.findOne({
+      payhere_order_id: order_id,
+    })
+
+    if (appointment && status_code === '2') {
+      // Status code 2 = Success
+      await appointmentModel.findByIdAndUpdate(appointment._id, {
+        payment: true,
+      })
+      console.log(`Payment confirmed for appointment: ${appointment._id}`)
+    } else if (appointment && status_code !== '2') {
+      console.log(
+        `Payment failed for appointment: ${appointment._id}, status: ${status_code}`,
+      )
+    }
+
+    // Respond with success to PayHere
+    res.status(200).send('OK')
+  } catch (error) {
+    console.log('PayHere Notification Error:', error)
+    res.status(500).send('Error')
   }
 }
 
@@ -419,8 +454,7 @@ export {
   bookAppointment,
   listAppointment,
   cancelAppointment,
-  paymentRazorpay,
-  verifyRazorpay,
-  paymentStripe,
-  verifyStripe,
+  paymentPayHere,
+  verifyPayHere,
+  payHereNotification,
 }

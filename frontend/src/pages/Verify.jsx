@@ -1,4 +1,3 @@
-import axios from 'axios'
 import React, { useContext, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
@@ -6,51 +5,38 @@ import { toast } from 'react-toastify'
 
 /**
  * Verify Component
- * Handles Stripe payment verification after redirect
- * Displays loading spinner while verifying payment
+ * Handles payment callback from PayHere
+ * Shows loading spinner while processing payment confirmation
  */
 const Verify = () => {
   const [searchParams] = useSearchParams()
-  const success = searchParams.get('success')
+  const status = searchParams.get('status')
   const appointmentId = searchParams.get('appointmentId')
-  const { backendUrl, token } = useContext(AppContext)
   const navigate = useNavigate()
 
-  /**
-   * Verify Stripe payment status with backend
-   * Updates appointment payment status on success
-   */
-  const verifyStripe = async () => {
-    try {
-      const { data } = await axios.post(
-        backendUrl + '/api/user/verifyStripe',
-        { success, appointmentId },
-        { headers: { token } },
-      )
-
-      if (data.success) {
-        toast.success(data.message)
-      } else {
-        toast.error(data.message)
-      }
-      navigate('/my-appointments')
-    } catch (error) {
-      toast.error(error.message)
-      console.log(error)
-    }
-  }
-
-  // Trigger verification when component mounts with required params
   useEffect(() => {
-    if (token && appointmentId && success) {
-      verifyStripe()
+    if (status === 'success' && appointmentId) {
+      // Payment successful - appointment will be updated by notification
+      toast.success('Payment Successful!')
+      navigate('/my-appointments')
+    } else if (status === 'cancel') {
+      toast.info('Payment Cancelled')
+      navigate('/my-appointments')
+    } else if (status === 'failed') {
+      toast.error('Payment Failed')
+      navigate('/my-appointments')
+    } else {
+      // No params, redirect to appointments
+      navigate('/my-appointments')
     }
-  }, [token])
+  }, [status, appointmentId, navigate])
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
-      {/* Loading spinner while verifying payment */}
-      <div className="w-20 h-20 border-4 border-gray-300 border-t-4 border-t-primary rounded-full animate-spin"></div>
+      <div className="text-center">
+        <div className="w-20 h-20 border-4 border-gray-300 border-t-4 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600">Processing payment confirmation...</p>
+      </div>
     </div>
   )
 }

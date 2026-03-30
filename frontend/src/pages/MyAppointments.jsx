@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -8,14 +8,16 @@ import { assets } from '../assets/assets'
 /**
  * MyAppointments Component
  * Displays all appointments for the logged-in user
- * Handles appointment cancellation and payment processing
+ * Handles appointment cancellation and PayHere payment processing
  */
 const MyAppointments = () => {
   const { backendUrl, token } = useContext(AppContext)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const paymentStatus = searchParams.get('payment')
 
   const [appointments, setAppointments] = useState([])
-  const [payment, setPayment] = useState('')
+  const [loadingPayment, setLoadingPayment] = useState(null)
 
   const months = [
     'Jan',
@@ -88,82 +90,46 @@ const MyAppointments = () => {
   }
 
   /**
-   * Initialize Razorpay payment
-   * @param {Object} order - Razorpay order object
-   */
-  const initPay = (order) => {
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: order.currency,
-      name: 'Appointment Payment',
-      description: 'Sensaloon Service Payment',
-      order_id: order.id,
-      receipt: order.receipt,
-      handler: async (response) => {
-        try {
-          const { data } = await axios.post(
-            backendUrl + '/api/user/verifyRazorpay',
-            response,
-            { headers: { token } },
-          )
-          if (data.success) {
-            getUserAppointments()
-            navigate('/my-appointments')
-          }
-        } catch (error) {
-          console.log(error)
-          toast.error(error.message)
-        }
-      },
-    }
-    const rzp = new window.Razorpay(options)
-    rzp.open()
-  }
-
-  /**
-   * Process Razorpay payment for appointment
+   * Process PayHere payment for appointment
    * @param {string} appointmentId - ID of appointment to pay for
    */
-  const appointmentRazorpay = async (appointmentId) => {
+  const appointmentPayHere = async (appointmentId) => {
+    setLoadingPayment(appointmentId)
     try {
       const { data } = await axios.post(
-        backendUrl + '/api/user/payment-razorpay',
+        backendUrl + '/api/user/payment-payhere',
         { appointmentId },
         { headers: { token } },
       )
-      if (data.success) {
-        initPay(data.order)
+      if (data.success && data.payment_url) {
+        // Redirect to PayHere hosted payment page
+        window.location.href = data.payment_url
       } else {
-        toast.error(data.message)
+        toast.error(data.message || 'Failed to initiate payment')
+        setLoadingPayment(null)
       }
     } catch (error) {
       console.log(error)
-      toast.error(error.message)
+      toast.error(error.message || 'Payment initiation failed')
+      setLoadingPayment(null)
     }
   }
 
-  /**
-   * Process Stripe payment for appointment
-   * @param {string} appointmentId - ID of appointment to pay for
-   */
-  const appointmentStripe = async (appointmentId) => {
-    try {
-      const { data } = await axios.post(
-        backendUrl + '/api/user/payment-stripe',
-        { appointmentId },
-        { headers: { token } },
-      )
-      if (data.success) {
-        window.location.replace(data.session_url)
-      } else {
-        toast.error(data.message)
-      }
-    } catch (error) {
-      console.log(error)
-      toast.error(error.message)
+  // Check payment status from URL params
+  useEffect(() => {
+    if (paymentStatus === 'success') {
+      toast.success('Payment completed successfully!')
+      // Remove the query param from URL
+      navigate('/my-appointments', { replace: true })
+      getUserAppointments()
+    } else if (paymentStatus === 'cancelled') {
+      toast.info('Payment was cancelled')
+      navigate('/my-appointments', { replace: true })
+    } else if (paymentStatus === 'failed') {
+      toast.error('Payment failed. Please try again.')
+      navigate('/my-appointments', { replace: true })
     }
-  }
+  }, [paymentStatus, navigate])
 
   // Load appointments when user is logged in
   useEffect(() => {
@@ -218,52 +184,43 @@ const MyAppointments = () => {
 
             {/* Action buttons based on appointment status */}
             <div className="flex flex-col gap-2 justify-end text-sm text-center">
-              {/* Show Pay Online button for unpaid appointments */}
-              {!item.cancelled &&
-                !item.payment &&
-                !item.isCompleted &&
-                payment !== item._id && (
-                  <button
-                    onClick={() => setPayment(item._id)}
-                    className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300"
-                  >
-                    Pay Online
-                  </button>
-                )}
-
-              {/* Show payment options when Pay Online is clicked */}
-              {!item.cancelled &&
-                !item.payment &&
-                !item.isCompleted &&
-                payment === item._id && (
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => appointmentStripe(item._id)}
-                      className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 transition-all duration-300 flex items-center justify-center"
-                    >
+              {/* Pay Now button for unpaid appointments */}
+              {!item.cancelled && !item.payment && !item.isCompleted && (
+                <button
+                  onClick={() => appointmentPayHere(item._id)}
+                  disabled={loadingPayment === item._id}
+                  className={`text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2 ${
+                    loadingPayment === item._id
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }`}
+                >
+                  {loadingPayment === item._id ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
                       <img
-                        className="max-w-16"
-                        src={assets.stripe_logo}
-                        alt="Stripe"
+                        className="w-5 h-5"
+                        src={assets.payhere_logo}
+                        alt="Pay Here"
+                        onError={(e) => {
+                          e.target.onerror = null
+                          e.target.src = assets.razorpay_logo
+                        }}
                       />
-                    </button>
-                    <button
-                      onClick={() => appointmentRazorpay(item._id)}
-                      className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 transition-all duration-300 flex items-center justify-center"
-                    >
-                      <img
-                        className="max-w-16"
-                        src={assets.razorpay_logo}
-                        alt="Razorpay"
-                      />
-                    </button>
-                  </div>
-                )}
+                      Pay Now
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* Paid status */}
               {!item.cancelled && item.payment && !item.isCompleted && (
                 <button className="sm:min-w-48 py-2 border rounded text-[#22C55E] bg-[#F0FDF4] border-green-200">
-                  Paid
+                  Paid ✓
                 </button>
               )}
 
