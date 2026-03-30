@@ -13,10 +13,12 @@ const PAYHERE_SECRET = process.env.PAYHERE_SECRET
 const PAYHERE_CURRENCY = process.env.PAYHERE_CURRENCY || 'LKR'
 const PAYHERE_SANDBOX = process.env.PAYHERE_SANDBOX === 'true'
 
-// PayHere API endpoints
-const PAYHERE_CHECKOUT_URL = PAYHERE_SANDBOX
-  ? 'https://sandbox.payhere.lk/pay/checkout'
-  : 'https://www.payhere.lk/pay/checkout'
+// PayHere API endpoints - FIXED URLS
+const PAYHERE_BASE_URL = PAYHERE_SANDBOX
+  ? 'https://sandbox.payhere.lk'
+  : 'https://www.payhere.lk'
+
+const PAYHERE_CHECKOUT_URL = `${PAYHERE_BASE_URL}/pay/checkout`
 
 /**
  * Generate MD5 signature for PayHere payment
@@ -54,6 +56,12 @@ const registerUser = async (req, res) => {
         success: false,
         message: 'Please enter a strong password',
       })
+    }
+
+    // Check if user already exists
+    const existingUser = await userModel.findOne({ email })
+    if (existingUser) {
+      return res.json({ success: false, message: 'User already exists' })
     }
 
     // Hash password
@@ -324,6 +332,14 @@ const paymentPayHere = async (req, res) => {
       })
     }
 
+    // Check if already paid
+    if (appointmentData.payment) {
+      return res.json({
+        success: false,
+        message: 'Appointment already paid',
+      })
+    }
+
     // Generate unique order ID
     const orderId = `ORDER_${appointmentId}_${Date.now()}`
 
@@ -343,12 +359,14 @@ const paymentPayHere = async (req, res) => {
       payhere_order_id: orderId,
     })
 
-    // Build PayHere payment URL with parameters
+    // Build PayHere payment URL with parameters - FIXED URL FORMAT
     const paymentUrl = `${PAYHERE_CHECKOUT_URL}?merchant_id=${PAYHERE_MERCHANT_ID}&order_id=${orderId}&amount=${appointmentData.amount}&currency=${PAYHERE_CURRENCY}&return_url=${origin}/verify?status=success&appointmentId=${appointmentId}&cancel_url=${origin}/verify?status=cancel&notify_url=${process.env.BACKEND_URL}/api/user/payhere-notify&signature=${signature}&item_name=Salon%20Appointment&item_id=${appointmentId}`
+
+    console.log('PayHere Payment URL:', paymentUrl) // Debug log
 
     res.json({ success: true, payment_url: paymentUrl })
   } catch (error) {
-    console.log(error)
+    console.log('PayHere Payment Error:', error)
     res.json({ success: false, message: error.message })
   }
 }
@@ -361,6 +379,8 @@ const verifyPayHere = async (req, res) => {
   try {
     const { appointmentId, status } = req.query
 
+    console.log('PayHere Verify:', { appointmentId, status }) // Debug log
+
     if (status === 'cancel') {
       return res.redirect(
         `${process.env.FRONTEND_URL}/my-appointments?payment=cancelled`,
@@ -368,7 +388,14 @@ const verifyPayHere = async (req, res) => {
     }
 
     if (status === 'success' && appointmentId) {
-      await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true })
+      // Check if payment is already confirmed
+      const appointment = await appointmentModel.findById(appointmentId)
+      if (appointment && !appointment.payment) {
+        // Mark as paid if not already
+        await appointmentModel.findByIdAndUpdate(appointmentId, {
+          payment: true,
+        })
+      }
       return res.redirect(
         `${process.env.FRONTEND_URL}/my-appointments?payment=success`,
       )
@@ -378,7 +405,7 @@ const verifyPayHere = async (req, res) => {
       `${process.env.FRONTEND_URL}/my-appointments?payment=failed`,
     )
   } catch (error) {
-    console.log(error)
+    console.log('PayHere Verify Error:', error)
     return res.redirect(
       `${process.env.FRONTEND_URL}/my-appointments?payment=failed`,
     )
@@ -402,7 +429,12 @@ const payHereNotification = async (req, res) => {
       md5sig,
     } = req.body
 
-    console.log('PayHere Notification Received:', { order_id, status_code })
+    console.log('PayHere Notification Received:', {
+      order_id,
+      status_code,
+      payment_id,
+      payhere_amount,
+    })
 
     // Verify signature
     const verificationData = {
@@ -431,11 +463,13 @@ const payHereNotification = async (req, res) => {
       await appointmentModel.findByIdAndUpdate(appointment._id, {
         payment: true,
       })
-      console.log(`Payment confirmed for appointment: ${appointment._id}`)
+      console.log(`✅ Payment confirmed for appointment: ${appointment._id}`)
     } else if (appointment && status_code !== '2') {
       console.log(
-        `Payment failed for appointment: ${appointment._id}, status: ${status_code}`,
+        `❌ Payment failed for appointment: ${appointment._id}, status: ${status_code}`,
       )
+    } else {
+      console.log(`⚠️ Appointment not found for order_id: ${order_id}`)
     }
 
     // Respond with success to PayHere
