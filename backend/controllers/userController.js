@@ -6,6 +6,11 @@ import stylistModel from '../models/stylistModel.js'
 import appointmentModel from '../models/appointmentModel.js'
 import { v2 as cloudinary } from 'cloudinary'
 import crypto from 'crypto'
+import {
+  sendBookingConfirmationEmail,
+  sendPaymentConfirmationEmail,
+  sendCancellationEmail,
+} from '../utils/emailService.js'
 
 // PayHere Configuration
 const PAYHERE_MERCHANT_ID = process.env.PAYHERE_MERCHANT_ID
@@ -20,16 +25,25 @@ const PAYHERE_BASE_URL = PAYHERE_SANDBOX
 
 const PAYHERE_CHECKOUT_URL = `${PAYHERE_BASE_URL}/pay/checkout`
 
+const md5 = (str) => crypto.createHash('md5').update(str).digest('hex')
+const toDecimal = (amount) => parseFloat(amount).toFixed(2)
+
 /**
- * Generate MD5 signature for PayHere payment
- * @param {Object} paymentData - Payment details
- * @returns {string} MD5 hash signature
+ * Generate PayHere MD5 hash.
+ * Formula: md5(merchant_id + order_id + toDecimal(amount) + currency + md5(merchant_secret).toUpperCase())
  */
-const generatePayHereSignature = (paymentData) => {
-  const { merchant_id, order_id, amount, currency, merchant_secret } =
-    paymentData
-  const hashString = `${merchant_id}${order_id}${amount}${currency}${merchant_secret}`
-  return crypto.createHash('md5').update(hashString).digest('hex').toUpperCase()
+const generatePayHereSignature = ({ merchant_id, order_id, amount, currency, merchant_secret }) => {
+  const secretHash = md5(merchant_secret).toUpperCase()
+  return md5(merchant_id + order_id + toDecimal(amount) + currency + secretHash).toUpperCase()
+}
+
+/**
+ * Verify PayHere notification hash.
+ * Formula: md5(merchant_id + order_id + payhere_amount + payhere_currency + status_code + md5(merchant_secret).toUpperCase())
+ */
+const verifyNotifyHash = ({ merchant_id, order_id, payhere_amount, payhere_currency, status_code, merchant_secret }) => {
+  const secretHash = md5(merchant_secret).toUpperCase()
+  return md5(merchant_id + order_id + payhere_amount + payhere_currency + status_code + secretHash).toUpperCase()
 }
 
 /**
@@ -246,6 +260,16 @@ const bookAppointment = async (req, res) => {
     // Update stylist's slots
     await stylistModel.findByIdAndUpdate(stylId, { slots_booked })
 
+    // Send booking confirmation email (non-blocking)
+    sendBookingConfirmationEmail({
+      userData,
+      stylistData,
+      slotDate,
+      slotTime,
+      amount: stylistData.fees,
+      appointmentId: newAppointment._id,
+    })
+
     res.json({
       success: true,
       message: 'Appointment Booked Successfully',
@@ -288,6 +312,19 @@ const cancelAppointment = async (req, res) => {
           (e) => e !== slotTime,
         )
         await stylistModel.findByIdAndUpdate(stylistId, { slots_booked })
+      }
+    }
+
+    // Send cancellation email (non-blocking)
+    if (stylistData) {
+      const userData = await userModel.findById(userId).select('-password')
+      if (userData) {
+        sendCancellationEmail({
+          userData,
+          stylistData,
+          slotDate: appointmentData.slotDate,
+          slotTime: appointmentData.slotTime,
+        })
       }
     }
 
@@ -347,7 +384,7 @@ const paymentPayHere = async (req, res) => {
     const paymentData = {
       merchant_id: PAYHERE_MERCHANT_ID,
       order_id: orderId,
-      amount: appointmentData.amount.toString(),
+      amount: appointmentData.amount,
       currency: PAYHERE_CURRENCY,
       merchant_secret: PAYHERE_SECRET,
     }
@@ -437,16 +474,14 @@ const payHereNotification = async (req, res) => {
     })
 
     // Verify signature
-    const verificationData = {
-      merchant_id: merchant_id,
-      order_id: order_id,
-      amount: payhere_amount,
-      currency: payhere_currency,
-      status_code: status_code,
+    const expectedHash = verifyNotifyHash({
+      merchant_id,
+      order_id,
+      payhere_amount,
+      payhere_currency,
+      status_code,
       merchant_secret: PAYHERE_SECRET,
-    }
-
-    const expectedHash = generatePayHereSignature(verificationData)
+    })
 
     if (md5sig !== expectedHash) {
       console.log('Invalid signature')
@@ -464,6 +499,15 @@ const payHereNotification = async (req, res) => {
         payment: true,
       })
       console.log(`✅ Payment confirmed for appointment: ${appointment._id}`)
+
+      // Send payment confirmation email (non-blocking)
+      sendPaymentConfirmationEmail({
+        userData: appointment.userData,
+        stylistData: appointment.stylistData,
+        slotDate: appointment.slotDate,
+        slotTime: appointment.slotTime,
+        amount: appointment.amount,
+      })
     } else if (appointment && status_code !== '2') {
       console.log(
         `❌ Payment failed for appointment: ${appointment._id}, status: ${status_code}`,
@@ -480,6 +524,49 @@ const payHereNotification = async (req, res) => {
   }
 }
 
+/**
+ * Confirm Payment (client-side trigger)
+ * Called by the frontend when window.payhere.onCompleted fires.
+ * Marks the appointment as paid and fires the payment confirmation email.
+ * This is the reliable path for sandbox/localhost where PayHere cannot
+ * reach the /notify endpoint directly.
+ */
+const confirmPayment = async (req, res) => {
+  try {
+    const { userId, appointmentId } = req.body
+
+    const appointment = await appointmentModel.findById(appointmentId)
+
+    if (!appointment) {
+      return res.json({ success: false, message: 'Appointment not found' })
+    }
+
+    if (appointment.userId !== userId) {
+      return res.json({ success: false, message: 'Unauthorized' })
+    }
+
+    if (appointment.payment) {
+      return res.json({ success: true, message: 'Already paid' })
+    }
+
+    await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true })
+
+    // Send payment confirmation email (non-blocking)
+    sendPaymentConfirmationEmail({
+      userData: appointment.userData,
+      stylistData: appointment.stylistData,
+      slotDate: appointment.slotDate,
+      slotTime: appointment.slotTime,
+      amount: appointment.amount,
+    })
+
+    res.json({ success: true, message: 'Payment confirmed' })
+  } catch (error) {
+    console.log('confirmPayment error:', error)
+    res.json({ success: false, message: error.message })
+  }
+}
+
 export {
   loginUser,
   registerUser,
@@ -491,4 +578,5 @@ export {
   paymentPayHere,
   verifyPayHere,
   payHereNotification,
+  confirmPayment,
 }

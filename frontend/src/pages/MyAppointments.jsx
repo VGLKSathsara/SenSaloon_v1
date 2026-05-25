@@ -4,6 +4,7 @@ import { AppContext } from '../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { assets } from '../assets/assets'
+import PaymentButton from '../components/PaymentButton'
 
 /**
  * MyAppointments Component
@@ -17,7 +18,6 @@ const MyAppointments = () => {
   const paymentStatus = searchParams.get('payment')
 
   const [appointments, setAppointments] = useState([])
-  const [loadingPayment, setLoadingPayment] = useState(null)
 
   const months = [
     'Jan',
@@ -42,7 +42,7 @@ const MyAppointments = () => {
   const slotDateFormat = (slotDate) => {
     const dateArray = slotDate.split('_')
     return (
-      dateArray[0] + ' ' + months[Number(dateArray[1])] + ' ' + dateArray[2]
+      dateArray[0] + ' ' + months[Number(dateArray[1]) - 1] + ' ' + dateArray[2]
     )
   }
 
@@ -89,33 +89,7 @@ const MyAppointments = () => {
     }
   }
 
-  /**
-   * Process PayHere payment for appointment
-   * @param {string} appointmentId - ID of appointment to pay for
-   */
-  const appointmentPayHere = async (appointmentId) => {
-    setLoadingPayment(appointmentId)
-    try {
-      const { data } = await axios.post(
-        backendUrl + '/api/user/payment-payhere',
-        { appointmentId },
-        { headers: { token } },
-      )
-      if (data.success && data.payment_url) {
-        // Redirect to PayHere hosted payment page
-        window.location.href = data.payment_url
-      } else {
-        toast.error(data.message || 'Failed to initiate payment')
-        setLoadingPayment(null)
-      }
-    } catch (error) {
-      console.log(error)
-      toast.error(error.message || 'Payment initiation failed')
-      setLoadingPayment(null)
-    }
-  }
-
-  // Check payment status from URL params
+  // Check payment status from URL params (legacy redirect flow)
   useEffect(() => {
     if (paymentStatus === 'success') {
       toast.success('Payment completed successfully!')
@@ -186,35 +160,27 @@ const MyAppointments = () => {
             <div className="flex flex-col gap-2 justify-end text-sm text-center">
               {/* Pay Now button for unpaid appointments */}
               {!item.cancelled && !item.payment && !item.isCompleted && (
-                <button
-                  onClick={() => appointmentPayHere(item._id)}
-                  disabled={loadingPayment === item._id}
-                  className={`text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2 ${
-                    loadingPayment === item._id
-                      ? 'opacity-50 cursor-not-allowed'
-                      : ''
-                  }`}
+                <PaymentButton
+                  appointmentId={item._id}
+                  amount={item.amount}
+                  currency="LKR"
+                  items={`Appointment with ${item.stylistData.name}`}
+                  onSuccess={() => {
+                    // DB is already updated by PaymentButton's confirm-payment call,
+                    // so a plain re-fetch is enough — no optimistic patch needed.
+                    getUserAppointments()
+                  }}
+                  onDismissed={() => {}}
+                  onError={(err) => console.error('Payment error:', err)}
+                  className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300"
                 >
-                  {loadingPayment === item._id ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <img
-                        className="w-5 h-5"
-                        src={assets.payhere_logo}
-                        alt="Pay Here"
-                        onError={(e) => {
-                          e.target.onerror = null
-                          e.target.src = assets.razorpay_logo
-                        }}
-                      />
-                      Pay Now
-                    </>
-                  )}
-                </button>
+                  <img
+                    className="w-5 h-5"
+                    src={assets.payhere_logo}
+                    alt="PayHere"
+                  />
+                  Pay Now
+                </PaymentButton>
               )}
 
               {/* Paid status */}

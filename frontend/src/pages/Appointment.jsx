@@ -118,6 +118,16 @@ const Appointment = () => {
       return
     }
 
+    if (!slotTime) {
+      toast.warning('Please select a time slot')
+      return
+    }
+
+    if (!stylSlots[slotIndex] || stylSlots[slotIndex].length === 0) {
+      toast.error('No slots available for this day')
+      return
+    }
+
     const date = stylSlots[slotIndex][0].datetime
     let day = date.getDate()
     let month = date.getMonth() + 1

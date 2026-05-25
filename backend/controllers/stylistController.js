@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import stylistModel from '../models/stylistModel.js'
 import appointmentModel from '../models/appointmentModel.js'
+import { sendCompletionEmail } from '../utils/emailService.js'
 
 /**
  * Stylist Login API
@@ -82,6 +83,16 @@ const appointmentComplete = async (req, res) => {
       await appointmentModel.findByIdAndUpdate(appointmentId, {
         isCompleted: true,
       })
+
+      // Notify customer that their appointment is completed (non-blocking)
+      sendCompletionEmail({
+        userData: appointmentData.userData,
+        stylistData: appointmentData.stylistData,
+        slotDate: appointmentData.slotDate,
+        slotTime: appointmentData.slotTime,
+        amount: appointmentData.amount,
+      }).catch((err) => console.error('Completion email error:', err.message))
+
       return res.json({ success: true, message: 'Appointment Completed' })
     }
 

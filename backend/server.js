@@ -6,6 +6,7 @@ import connectCloudinary from './config/cloudinary.js'
 import userRouter from './routes/userRoute.js'
 import stylistRouter from './routes/stylistRoute.js'
 import adminRouter from './routes/adminRoute.js'
+import paymentRouter from './routes/payment.js'
 import dns from 'node:dns'
 dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
 
@@ -19,6 +20,7 @@ connectCloudinary()
 
 // middlewares
 app.use(express.json())
+app.use(express.urlencoded({ extended: false })) // required for PayHere /notify (form-urlencoded)
 app.use(cors())
 
 // ============================================
@@ -27,6 +29,7 @@ app.use(cors())
 app.use('/api/user', userRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/stylist', stylistRouter)
+app.use('/api/payment', paymentRouter)
 
 // ============================================
 // TEST ROUTES
@@ -153,9 +156,11 @@ app.get('/', (req, res) => {
           <li>🔐 POST /api/stylist/login - Stylist Login</li>
           <li>🔐 POST /api/user/login - User Login</li>
           <li>📝 POST /api/user/register - User Registration</li>
-          <li>💵 POST /api/user/payment-payhere - Initiate PayHere Payment</li>
+          <li>💵 POST /api/user/payment-payhere - Initiate PayHere Payment (redirect flow)</li>
           <li>✅ GET /api/user/verify-payhere - Verify PayHere Payment</li>
-          <li>🔔 POST /api/user/payhere-notify - PayHere Webhook</li>
+          <li>🔔 POST /api/user/payhere-notify - PayHere Webhook (legacy)</li>
+          <li>🔑 POST /api/payment/hash - Generate PayHere hash (popup flow)</li>
+          <li>🔔 POST /api/payment/notify - PayHere Notification (popup flow)</li>
         </ul>
         <p><strong>📱 Frontend URL:</strong> ${process.env.FRONTEND_URL || 'http://localhost:5173'}</p>
         <hr>

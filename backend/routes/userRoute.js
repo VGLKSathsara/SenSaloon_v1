@@ -10,6 +10,7 @@ import {
   paymentPayHere,
   verifyPayHere,
   payHereNotification,
+  confirmPayment,
 } from '../controllers/userController.js'
 import upload from '../middleware/multer.js'
 import authUser from '../middleware/authUser.js'
@@ -35,5 +36,6 @@ userRouter.post('/cancel-appointment', authUser, cancelAppointment)
 userRouter.post('/payment-payhere', authUser, paymentPayHere)
 userRouter.get('/verify-payhere', verifyPayHere)
 userRouter.post('/payhere-notify', payHereNotification)
+userRouter.post('/confirm-payment', authUser, confirmPayment)
 
 export default userRouter
