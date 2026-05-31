@@ -4,6 +4,7 @@ import {
   appointmentsAdmin,
   appointmentCancel,
   addStylist,
+  editStylist,
   allStylists,
   adminDashboard,
   deleteStylist,
@@ -16,6 +17,7 @@ const adminRouter = express.Router()
 
 adminRouter.post('/login', loginAdmin)
 adminRouter.post('/add-stylist', authAdmin, upload.single('image'), addStylist)
+adminRouter.post('/edit-stylist', authAdmin, upload.single('image'), editStylist)
 adminRouter.get('/appointments', authAdmin, appointmentsAdmin)
 adminRouter.post('/cancel-appointment', authAdmin, appointmentCancel)
 adminRouter.get('/all-stylists', authAdmin, allStylists)

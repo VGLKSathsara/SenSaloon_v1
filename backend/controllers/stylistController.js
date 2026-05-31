@@ -160,12 +160,13 @@ const stylistProfile = async (req, res) => {
  */
 const updateStylistProfile = async (req, res) => {
   try {
-    const { stylistId, fees, address, available } = req.body
+    const { stylistId, fees, address, available, about } = req.body
 
     await stylistModel.findByIdAndUpdate(stylistId, {
       fees,
       address,
       available,
+      about,
     })
 
     res.json({ success: true, message: 'Profile Updated' })

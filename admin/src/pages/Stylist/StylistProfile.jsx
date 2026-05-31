@@ -25,12 +25,13 @@ const StylistProfile = () => {
         address: profileData.address,
         fees: profileData.fees,
         available: profileData.available,
+        about: profileData.about,
       }
 
       const { data } = await axios.post(
         backendUrl + '/api/stylist/update-profile',
         updateData,
-        { headers: { sToken } },
+        { headers: { stoken: sToken } },
       )
 
       if (data.success) {

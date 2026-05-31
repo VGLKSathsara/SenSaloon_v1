@@ -9,6 +9,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Admin/Dashboard'
 import AllAppointments from './pages/Admin/AllAppointments'
 import AddStylist from './pages/Admin/AddStylist'
+import EditStylist from './pages/Admin/EditStylist'
 import StylistsList from './pages/Admin/StylistsList'
 import Login from './pages/Login'
 import StylistAppointments from './pages/Stylist/StylistAppointments'
@@ -48,6 +49,7 @@ const App = () => {
           <Route path="/admin-dashboard" element={<Dashboard />} />
           <Route path="/all-appointments" element={<AllAppointments />} />
           <Route path="/add-stylist" element={<AddStylist />} />
+          <Route path="/edit-stylist/:stylistId" element={<EditStylist />} />
           <Route path="/stylist-list" element={<StylistsList />} />
 
           {/* Stylist Routes - accessible only when sToken exists */}

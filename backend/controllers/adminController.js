@@ -69,7 +69,7 @@ const addStylist = async (req, res) => {
       email,
       password,
       serviceType,
-      qualification,
+      qualifications,
       experience,
       about,
       fees,
@@ -83,7 +83,7 @@ const addStylist = async (req, res) => {
       !email ||
       !password ||
       !serviceType ||
-      !qualification ||
+      !qualifications ||
       !experience ||
       !about ||
       !fees ||
@@ -115,6 +115,16 @@ const addStylist = async (req, res) => {
     })
     const imageUrl = imageUpload.secure_url
 
+    // Parse qualifications if it's a string
+    let qualificationsArray = qualifications
+    if (typeof qualifications === 'string') {
+      try {
+        qualificationsArray = JSON.parse(qualifications)
+      } catch (e) {
+        qualificationsArray = [qualifications]
+      }
+    }
+
     // Create stylist data object
     const stylistData = {
       name,
@@ -122,7 +132,7 @@ const addStylist = async (req, res) => {
       image: imageUrl,
       password: hashedPassword,
       serviceType,
-      qualification,
+      qualifications: qualificationsArray,
       experience,
       about,
       fees,
@@ -219,11 +229,118 @@ const deleteStylist = async (req, res) => {
   }
 }
 
+/**
+ * Edit Stylist
+ * Updates existing stylist information
+ */
+const editStylist = async (req, res) => {
+  try {
+    const {
+      stylistId,
+      name,
+      email,
+      password,
+      serviceType,
+      qualifications,
+      experience,
+      about,
+      fees,
+      address,
+      available,
+    } = req.body
+    const imageFile = req.file
+
+    // Validate stylist ID
+    if (!stylistId) {
+      return res.json({
+        success: false,
+        message: 'Stylist ID is required',
+      })
+    }
+
+    // Check if stylist exists
+    const stylist = await stylistModel.findById(stylistId)
+    if (!stylist) {
+      return res.json({
+        success: false,
+        message: 'Stylist not found',
+      })
+    }
+
+    // Validate email if changed
+    if (email && email !== stylist.email && !validator.isEmail(email)) {
+      return res.json({ success: false, message: 'Please enter a valid email' })
+    }
+
+    // Validate password strength if provided
+    if (password && password.length < 8) {
+      return res.json({
+        success: false,
+        message: 'Please enter a strong password',
+      })
+    }
+
+    // Build update data object
+    const updateData = {}
+
+    if (name) updateData.name = name
+    if (email) updateData.email = email
+    if (password) {
+      const salt = await bcrypt.genSalt(10)
+      updateData.password = await bcrypt.hash(password, salt)
+    }
+    if (serviceType) updateData.serviceType = serviceType
+    if (qualifications) {
+      let qualificationsArray = qualifications
+      if (typeof qualifications === 'string') {
+        try {
+          qualificationsArray = JSON.parse(qualifications)
+        } catch (e) {
+          qualificationsArray = [qualifications]
+        }
+      }
+      updateData.qualifications = qualificationsArray
+    }
+    if (experience) updateData.experience = experience
+    if (about) updateData.about = about
+    if (fees) updateData.fees = fees
+    if (address) {
+      const addressParsed =
+        typeof address === 'string' ? JSON.parse(address) : address
+      updateData.address = addressParsed
+    }
+    if (available !== undefined) updateData.available = available
+
+    // Upload new image if provided
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: 'image',
+      })
+      updateData.image = imageUpload.secure_url
+    }
+
+    // Update stylist
+    await stylistModel.findByIdAndUpdate(stylistId, updateData)
+
+    res.json({
+      success: true,
+      message: 'Stylist updated successfully',
+    })
+  } catch (error) {
+    console.log(error)
+    res.json({
+      success: false,
+      message: error.message,
+    })
+  }
+}
+
 export {
   loginAdmin,
   appointmentsAdmin,
   appointmentCancel,
   addStylist,
+  editStylist,
   allStylists,
   adminDashboard,
   deleteStylist,

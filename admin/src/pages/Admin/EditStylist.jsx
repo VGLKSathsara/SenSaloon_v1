@@ -1,12 +1,19 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { AdminContext } from '../../context/AdminContext'
 import { AppContext } from '../../context/AppContext'
 
-const AddStylist = () => {
+const EditStylist = () => {
+  const { stylistId } = useParams()
+  const navigate = useNavigate()
+  const { backendUrl, aToken } = useContext(AdminContext)
+  const { aToken: contextAToken } = useContext(AdminContext)
+
   const [stylistImg, setStylistImg] = useState(false)
+  const [originalImg, setOriginalImg] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,16 +27,62 @@ const AddStylist = () => {
 
   const [address1, setAddress1] = useState('')
   const [address2, setAddress2] = useState('')
+  const [available, setAvailable] = useState(true)
+  const [loading, setLoading] = useState(true)
 
-  const { backendUrl } = useContext(AppContext)
-  const { aToken } = useContext(AdminContext)
+  const { backendUrl: contextBackendUrl } = useContext(AppContext)
+  const token = contextAToken || aToken
+
+  useEffect(() => {
+    const fetchStylistData = async () => {
+      try {
+        const { data } = await axios.get(
+          contextBackendUrl + '/api/admin/all-stylists',
+          { headers: { atoken: token } }
+        )
+        if (data.success) {
+          const stylist = data.stylists.find((s) => s._id === stylistId)
+          if (stylist) {
+            setName(stylist.name)
+            setEmail(stylist.email)
+            setExperience(stylist.experience)
+            setFees(stylist.fees)
+            setAbout(stylist.about)
+            setServiceType(stylist.serviceType)
+            setAvailable(stylist.available)
+            setOriginalImg(stylist.image)
+
+            if (stylist.address) {
+              setAddress1(stylist.address.line1 || '')
+              setAddress2(stylist.address.line2 || '')
+            }
+
+            if (stylist.qualifications && Array.isArray(stylist.qualifications)) {
+              const quals = stylist.qualifications.map((q, index) => ({
+                id: index + 1,
+                value: q,
+              }))
+              setQualifications(quals)
+              setNextQualId(quals.length + 1)
+            }
+          }
+        }
+      } catch (error) {
+        toast.error('Failed to load stylist data')
+        console.log(error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (stylistId && token) {
+      fetchStylistData()
+    }
+  }, [stylistId, token, contextBackendUrl])
 
   const addQualificationField = () => {
     if (qualifications.length < 3) {
-      setQualifications([
-        ...qualifications,
-        { id: nextQualId, value: '' },
-      ])
+      setQualifications([...qualifications, { id: nextQualId, value: '' }])
       setNextQualId(nextQualId + 1)
     } else {
       toast.error('Maximum 3 qualifications allowed')
@@ -46,9 +99,7 @@ const AddStylist = () => {
 
   const updateQualificationField = (id, value) => {
     setQualifications(
-      qualifications.map((q) =>
-        q.id === id ? { ...q, value } : q
-      )
+      qualifications.map((q) => (q.id === id ? { ...q, value } : q))
     )
   }
 
@@ -56,20 +107,22 @@ const AddStylist = () => {
     event.preventDefault()
 
     try {
-      if (!stylistImg) {
-        return toast.error('Image Not Selected')
-      }
-
       if (qualifications.some((q) => q.value.trim() === '')) {
         return toast.error('Please fill all qualification fields')
       }
 
       const formData = new FormData()
 
-      formData.append('image', stylistImg)
+      if (stylistImg) {
+        formData.append('image', stylistImg)
+      }
+
+      formData.append('stylistId', stylistId)
       formData.append('name', name)
       formData.append('email', email)
-      formData.append('password', password)
+      if (password) {
+        formData.append('password', password)
+      }
       formData.append('experience', experience)
       formData.append('fees', Number(fees))
       formData.append('about', about)
@@ -82,25 +135,17 @@ const AddStylist = () => {
         'address',
         JSON.stringify({ line1: address1, line2: address2 })
       )
+      formData.append('available', available)
 
       const { data } = await axios.post(
-        backendUrl + '/api/admin/add-stylist',
+        contextBackendUrl + '/api/admin/edit-stylist',
         formData,
-        { headers: { atoken: aToken } },
+        { headers: { atoken: token } }
       )
 
       if (data.success) {
         toast.success(data.message)
-        setStylistImg(false)
-        setName('')
-        setPassword('')
-        setEmail('')
-        setAddress1('')
-        setAddress2('')
-        setQualifications([{ id: 1, value: '' }])
-        setNextQualId(2)
-        setAbout('')
-        setFees('')
+        navigate('/stylist-list')
       } else {
         toast.error(data.message)
       }
@@ -110,9 +155,13 @@ const AddStylist = () => {
     }
   }
 
+  if (loading) {
+    return <div className="m-5 text-center">Loading...</div>
+  }
+
   return (
     <form onSubmit={onSubmitHandler} className="m-5 w-full">
-      <p className="mb-3 text-lg font-medium text-gray-700">Add Stylist</p>
+      <p className="mb-3 text-lg font-medium text-gray-700">Edit Stylist</p>
 
       <div className="bg-white px-8 py-8 border rounded w-full max-w-4xl max-h-[80vh] overflow-y-scroll shadow-sm">
         {/* Image Upload Section */}
@@ -120,12 +169,8 @@ const AddStylist = () => {
           <label htmlFor="stylist-img">
             <img
               className="w-16 bg-gray-100 rounded-full cursor-pointer object-cover h-16"
-              src={
-                stylistImg
-                  ? URL.createObjectURL(stylistImg)
-                  : assets.upload_area
-              }
-              alt="Upload"
+              src={stylistImg ? URL.createObjectURL(stylistImg) : originalImg}
+              alt="Stylist"
             />
           </label>
           <input
@@ -135,7 +180,7 @@ const AddStylist = () => {
             hidden
           />
           <p className="text-sm">
-            Upload Stylist <br /> picture
+            Upload new <br /> picture (optional)
           </p>
         </div>
 
@@ -169,16 +214,15 @@ const AddStylist = () => {
               />
             </div>
 
-            {/* Password field */}
+            {/* Password field - optional for edit */}
             <div className="flex-1 flex flex-col gap-1">
-              <p>Set Password</p>
+              <p>Password (leave blank to keep current)</p>
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 className="border rounded px-3 py-2 focus:border-primary outline-none"
                 type="password"
                 placeholder="Password"
-                required
               />
             </div>
 
@@ -210,6 +254,23 @@ const AddStylist = () => {
                 required
               />
             </div>
+
+            {/* Availability toggle */}
+            <div className="flex items-center gap-2">
+              <input
+                id="available-check"
+                className="w-4 h-4 accent-primary cursor-pointer"
+                type="checkbox"
+                onChange={() => setAvailable(!available)}
+                checked={available}
+              />
+              <label
+                htmlFor="available-check"
+                className="cursor-pointer text-gray-600 select-none"
+              >
+                Available for Bookings
+              </label>
+            </div>
           </div>
 
           {/* Right Column - Professional Info */}
@@ -235,7 +296,7 @@ const AddStylist = () => {
             <div className="flex-1 flex flex-col gap-1">
               <p>Qualifications</p>
               <div className="space-y-2">
-                {qualifications.map((qual, index) => (
+                {qualifications.map((qual) => (
                   <div key={qual.id} className="flex gap-2 items-end">
                     <input
                       onChange={(e) =>
@@ -306,16 +367,25 @@ const AddStylist = () => {
           ></textarea>
         </div>
 
-        {/* Submit button */}
-        <button
-          type="submit"
-          className="bg-primary px-10 py-3 mt-6 text-white rounded-full hover:bg-opacity-90 transition-all shadow-md"
-        >
-          Add Stylist
-        </button>
+        {/* Buttons */}
+        <div className="flex gap-4 mt-6">
+          <button
+            type="submit"
+            className="bg-primary px-10 py-3 text-white rounded-full hover:bg-opacity-90 transition-all shadow-md"
+          >
+            Save Changes
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/stylist-list')}
+            className="px-10 py-3 border border-gray-300 rounded-full hover:bg-gray-50 transition-all shadow-sm"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </form>
   )
 }
 
-export default AddStylist
+export default EditStylist

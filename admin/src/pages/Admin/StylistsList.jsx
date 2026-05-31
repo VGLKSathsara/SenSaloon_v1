@@ -1,13 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AdminContext } from '../../context/AdminContext'
 import { toast } from 'react-toastify'
 
 /**
  * StylistsList Component (Admin Panel)
  * Displays all stylists in a card grid format
- * Allows admin to toggle availability and delete stylists
+ * Allows admin to toggle availability, edit, and delete stylists
  */
 const StylistsList = () => {
+  const navigate = useNavigate()
   const {
     stylists,
     changeAvailability,
@@ -62,27 +64,37 @@ const StylistsList = () => {
             className="border border-[#C9D8FF] rounded-xl max-w-56 overflow-hidden cursor-pointer group hover:shadow-md transition-all relative"
             key={index}
           >
-            {/* Delete Button - Only visible on hover */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDelete(item._id, item.name)
-              }}
-              disabled={deletingId === item._id}
-              className={`absolute top-2 right-2 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all z-10 ${
-                deletingId === item._id
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-600'
-              }`}
-              title="Delete Stylist"
-            >
-              {deletingId === item._id ? (
-                // Loading spinner while deleting
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <span className="text-xl font-bold">×</span>
-              )}
-            </button>
+            {/* Action Buttons - Only visible on hover */}
+            <div className="absolute top-2 right-2 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-all">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(`/edit-stylist/${item._id}`)
+                }}
+                className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600 transition-all"
+                title="Edit Stylist"
+              >
+                ✎
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(item._id, item.name)
+                }}
+                disabled={deletingId === item._id}
+                className={`rounded-full w-8 h-8 flex items-center justify-center transition-all ${deletingId === item._id
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-red-500 hover:bg-red-600'
+                  }`}
+                title="Delete Stylist"
+              >
+                {deletingId === item._id ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span className="text-xl font-bold text-white">×</span>
+                )}
+              </button>
+            </div>
 
             {/* Stylist Image */}
             <img

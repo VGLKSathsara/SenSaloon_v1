@@ -7,7 +7,7 @@ const stylistSchema = new mongoose.Schema(
     password: { type: String, required: true },
     image: { type: String, required: true },
     serviceType: { type: String, required: true },
-    qualification: { type: String, required: true },
+    qualifications: { type: [String], default: [] },
     experience: { type: String, required: true },
     about: { type: String, required: true },
     available: { type: Boolean, default: true },

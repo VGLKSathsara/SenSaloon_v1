@@ -85,8 +85,8 @@ const Appointment = () => {
         // Check if slot is already booked
         const isSlotAvailable =
           stylInfo.slots_booked &&
-          stylInfo.slots_booked[slotDate] &&
-          stylInfo.slots_booked[slotDate].includes(slotTime)
+            stylInfo.slots_booked[slotDate] &&
+            stylInfo.slots_booked[slotDate].includes(slotTime)
             ? false
             : true
 
@@ -232,6 +232,25 @@ const Appointment = () => {
             </p>
           </div>
 
+          {/* Qualifications */}
+          {stylInfo.qualifications && stylInfo.qualifications.length > 0 && (
+            <div>
+              <p className="flex items-center gap-1 text-sm font-medium text-[#262626] mt-3">
+                Qualifications
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {stylInfo.qualifications.slice(0, 3).map((qual, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                  >
+                    {qual}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Service fee */}
           <p className="text-gray-600 font-medium mt-4">
             Service fee:{' '}
@@ -254,11 +273,10 @@ const Appointment = () => {
               <div
                 onClick={() => setSlotIndex(index)}
                 key={index}
-                className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${
-                  slotIndex === index
+                className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex === index
                     ? 'bg-primary text-white'
                     : 'border border-[#DDDDDD]'
-                }`}
+                  }`}
               >
                 <p>{item[0] && daysOfWeek[item[0].datetime.getDay()]}</p>
                 <p>{item[0] && item[0].datetime.getDate()}</p>
@@ -273,11 +291,10 @@ const Appointment = () => {
               <p
                 onClick={() => setSlotTime(item.time)}
                 key={index}
-                className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${
-                  item.time === slotTime
+                className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${item.time === slotTime
                     ? 'bg-primary text-white'
                     : 'text-[#949494] border border-[#B4B4B4]'
-                }`}
+                  }`}
               >
                 {item.time.toLowerCase()}
               </p>

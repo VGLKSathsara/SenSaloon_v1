@@ -28,7 +28,7 @@ const StylistContextProvider = (props) => {
     try {
       const { data } = await axios.get(
         backendUrl + '/api/stylist/appointments',
-        { headers: { sToken } },
+        { headers: { stoken: sToken } },
       )
       if (data.success) {
         setAppointments(data.appointments.reverse())
@@ -47,7 +47,7 @@ const StylistContextProvider = (props) => {
   const getProfileData = async () => {
     try {
       const { data } = await axios.get(backendUrl + '/api/stylist/profile', {
-        headers: { sToken },
+        headers: { stoken: sToken },
       })
       if (data.success) {
         setProfileData(data.profileData)
@@ -69,7 +69,7 @@ const StylistContextProvider = (props) => {
       const { data } = await axios.post(
         backendUrl + '/api/stylist/cancel-appointment',
         { appointmentId }, // stylistId added by middleware
-        { headers: { sToken } },
+        { headers: { stoken: sToken } },
       )
       if (data.success) {
         toast.success(data.message)
@@ -92,7 +92,7 @@ const StylistContextProvider = (props) => {
       const { data } = await axios.post(
         backendUrl + '/api/stylist/complete-appointment',
         { appointmentId },
-        { headers: { sToken } },
+        { headers: { stoken: sToken } },
       )
       if (data.success) {
         toast.success(data.message)
@@ -113,7 +113,7 @@ const StylistContextProvider = (props) => {
   const getDashData = async () => {
     try {
       const { data } = await axios.get(backendUrl + '/api/stylist/dashboard', {
-        headers: { sToken },
+        headers: { stoken: sToken },
       })
       if (data.success) {
         setDashData(data.dashData)

@@ -27,7 +27,7 @@ const AdminContextProvider = (props) => {
   const getAllStylists = async () => {
     try {
       const { data } = await axios.get(backendUrl + '/api/admin/all-stylists', {
-        headers: { aToken },
+        headers: { atoken: aToken },
       })
       if (data.success) {
         setStylists(data.stylists)
@@ -49,7 +49,7 @@ const AdminContextProvider = (props) => {
       const { data } = await axios.post(
         backendUrl + '/api/admin/change-availability',
         { stylistId },
-        { headers: { aToken } },
+        { headers: { atoken: aToken } },
       )
       if (data.success) {
         toast.success(data.message)
@@ -68,7 +68,7 @@ const AdminContextProvider = (props) => {
   const getAllAppointments = async () => {
     try {
       const { data } = await axios.get(backendUrl + '/api/admin/appointments', {
-        headers: { aToken },
+        headers: { atoken: aToken },
       })
       if (data.success) {
         setAppointments(data.appointments)
@@ -89,7 +89,7 @@ const AdminContextProvider = (props) => {
       const { data } = await axios.post(
         backendUrl + '/api/admin/cancel-appointment',
         { appointmentId },
-        { headers: { aToken } },
+        { headers: { atoken: aToken } },
       )
       if (data.success) {
         toast.success(data.message)
@@ -109,7 +109,7 @@ const AdminContextProvider = (props) => {
   const getDashData = async () => {
     try {
       const { data } = await axios.get(backendUrl + '/api/admin/dashboard', {
-        headers: { aToken },
+        headers: { atoken: aToken },
       })
       if (data.success) {
         setDashData(data.dashData)
@@ -131,7 +131,7 @@ const AdminContextProvider = (props) => {
       const { data } = await axios.post(
         backendUrl + '/api/admin/delete-stylist',
         { stylistId },
-        { headers: { aToken } },
+        { headers: { atoken: aToken } },
       )
 
       if (data.success) {
@@ -143,6 +143,35 @@ const AdminContextProvider = (props) => {
     } catch (error) {
       console.log(error)
       toast.error(error.message || 'Failed to delete stylist')
+    }
+  }
+
+  /**
+   * Edit an existing stylist
+   * Updates stylist information
+   * @param {string} stylistId - ID of stylist to edit
+   * @param {object} updateData - FormData object with updated stylist info
+   */
+  const editStylist = async (stylistId, updateData) => {
+    try {
+      const { data } = await axios.post(
+        backendUrl + '/api/admin/edit-stylist',
+        updateData,
+        { headers: { atoken: aToken } },
+      )
+
+      if (data.success) {
+        toast.success(data.message)
+        getAllStylists() // Refresh list after update
+        return true
+      } else {
+        toast.error(data.message)
+        return false
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message || 'Failed to edit stylist')
+      return false
     }
   }
 
@@ -161,6 +190,7 @@ const AdminContextProvider = (props) => {
     dashData,
     getDashData,
     deleteStylist,
+    editStylist,
   }
 
   return (
