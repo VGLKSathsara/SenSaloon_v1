@@ -22,7 +22,7 @@ const Stylists = () => {
     Haircut: 'Hair Cut',
     Facial: 'Facial',
     Manicure: 'Manicure',
-    'Hair Coloring': 'Hair Coloring',
+    'Hair Coloring': 'Hair Color',
     Makeup: 'Makeup',
     'Hair Spa': 'Hair Spa',
   }
@@ -76,65 +76,57 @@ const Stylists = () => {
         {/* Mobile filter toggle button */}
         <button
           onClick={() => setShowFilter(!showFilter)}
-          className={`py-1 px-3 border rounded text-sm transition-all sm:hidden ${
-            showFilter ? 'bg-primary text-white' : ''
-          }`}
+          className={`py-1 px-3 border rounded text-sm transition-all sm:hidden ${showFilter ? 'bg-primary text-white' : ''
+            }`}
         >
           Filters
         </button>
 
         {/* Filter sidebar - Service categories */}
         <div
-          className={`flex-col gap-4 text-sm text-gray-600 ${
-            showFilter ? 'flex' : 'hidden sm:flex'
-          }`}
+          className={`flex-col gap-4 text-sm text-gray-600 ${showFilter ? 'flex' : 'hidden sm:flex'
+            }`}
         >
           {/* Service filter options */}
           <p
             onClick={() => handleServiceClick('Haircut')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
-              service === 'Haircut' ? 'bg-[#E2E5FF] text-black' : ''
-            }`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Haircut' ? 'bg-[#E2E5FF] text-black' : ''
+              }`}
           >
             Haircut
           </p>
           <p
             onClick={() => handleServiceClick('Facial')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
-              service === 'Facial' ? 'bg-[#E2E5FF] text-black' : ''
-            }`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Facial' ? 'bg-[#E2E5FF] text-black' : ''
+              }`}
           >
             Facial
           </p>
           <p
             onClick={() => handleServiceClick('Manicure')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
-              service === 'Manicure' ? 'bg-[#E2E5FF] text-black' : ''
-            }`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Manicure' ? 'bg-[#E2E5FF] text-black' : ''
+              }`}
           >
             Manicure
           </p>
           <p
             onClick={() => handleServiceClick('Hair Coloring')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
-              service === 'Hair Coloring' ? 'bg-[#E2E5FF] text-black' : ''
-            }`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Hair Coloring' ? 'bg-[#E2E5FF] text-black' : ''
+              }`}
           >
             Hair Coloring
           </p>
           <p
             onClick={() => handleServiceClick('Makeup')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
-              service === 'Makeup' ? 'bg-[#E2E5FF] text-black' : ''
-            }`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Makeup' ? 'bg-[#E2E5FF] text-black' : ''
+              }`}
           >
             Makeup
           </p>
           <p
             onClick={() => handleServiceClick('Hair Spa')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
-              service === 'Hair Spa' ? 'bg-[#E2E5FF] text-black' : ''
-            }`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Hair Spa' ? 'bg-[#E2E5FF] text-black' : ''
+              }`}
           >
             Hair Spa
           </p>
@@ -163,14 +155,12 @@ const Stylists = () => {
                 <div className="p-4">
                   {/* Availability indicator */}
                   <div
-                    className={`flex items-center gap-2 text-sm text-center ${
-                      item.available ? 'text-green-500' : 'text-gray-500'
-                    }`}
+                    className={`flex items-center gap-2 text-sm text-center ${item.available ? 'text-green-500' : 'text-gray-500'
+                      }`}
                   >
                     <p
-                      className={`w-2 h-2 rounded-full ${
-                        item.available ? 'bg-green-500' : 'bg-gray-500'
-                      }`}
+                      className={`w-2 h-2 rounded-full ${item.available ? 'bg-green-500' : 'bg-gray-500'
+                        }`}
                     ></p>
                     <p>{item.available ? 'Available' : 'Not Available'}</p>
                   </div>
