@@ -21,10 +21,10 @@ const Stylists = () => {
   const serviceMapping = {
     Haircut: 'Hair Cut',
     Facial: 'Facial',
-    Manicure: 'Manicure',
+    Manicure: 'Manicure/Pedicure',
     'Hair Coloring': 'Hair Color',
-    Makeup: 'Makeup',
-    'Hair Spa': 'Hair Spa',
+    Makeup: 'Bridal Dressing',
+    'Hair Spa': 'Body Massage',
   }
 
   /**
