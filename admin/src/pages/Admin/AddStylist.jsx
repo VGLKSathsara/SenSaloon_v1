@@ -216,7 +216,7 @@ const AddStylist = () => {
           <div className="w-full lg:flex-1 flex flex-col gap-4">
             {/* Service type dropdown */}
             <div className="flex-1 flex flex-col gap-1">
-              <p>Service Type (Speciality)</p>
+              <p>Service Type</p>
               <select
                 onChange={(e) => setServiceType(e.target.value)}
                 value={serviceType}
@@ -227,7 +227,7 @@ const AddStylist = () => {
                 <option value="Hair Color">Hair Color</option>
                 <option value="Bridal Dressing">Bridal Dressing</option>
                 <option value="Manicure/Pedicure">Manicure/Pedicure</option>
-                <option value="Body Massage">Body Massage</option>
+                <option value="Hair Massage">Hair Massage</option>
               </select>
             </div>
 

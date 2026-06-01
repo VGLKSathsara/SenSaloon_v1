@@ -60,7 +60,7 @@ export const serviceData = [
     image: Bridal_Makeup,
   },
   {
-    service: 'Hair Spa',
+    service: 'Hair Massage',
     image: Hair_Spa,
   },
 ]

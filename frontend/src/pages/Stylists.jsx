@@ -24,7 +24,7 @@ const Stylists = () => {
     Manicure: 'Manicure/Pedicure',
     'Hair Coloring': 'Hair Color',
     Makeup: 'Bridal Dressing',
-    'Hair Spa': 'Body Massage',
+    'Hair Massage': ['Body Massage', 'Hair Massage'],
   }
 
   /**
@@ -37,9 +37,12 @@ const Stylists = () => {
       console.log('Selected service:', service)
       console.log('Looking for:', backendServiceName)
 
-      const filtered = stylists.filter(
-        (styl) => styl.serviceType === backendServiceName,
-      )
+      const filtered = stylists.filter((styl) => {
+        if (Array.isArray(backendServiceName)) {
+          return backendServiceName.includes(styl.serviceType)
+        }
+        return styl.serviceType === backendServiceName
+      })
       console.log('Found:', filtered.length, 'stylists')
       setFilterStylist(filtered)
     } else {
@@ -124,11 +127,11 @@ const Stylists = () => {
             Makeup
           </p>
           <p
-            onClick={() => handleServiceClick('Hair Spa')}
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Hair Spa' ? 'bg-[#E2E5FF] text-black' : ''
+            onClick={() => handleServiceClick('Hair Massage')}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${service === 'Hair Massage' ? 'bg-[#E2E5FF] text-black' : ''
               }`}
           >
-            Hair Spa
+            Hair Massage
           </p>
         </div>
 
