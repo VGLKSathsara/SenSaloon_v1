@@ -109,6 +109,6 @@
 | File Upload | Cloudinary                                |
 | Payments    | **PayHere** (Sri Lanka)                   |
 
----
+----
 
 ## 📁 **Project Structure**
